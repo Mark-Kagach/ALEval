@@ -47,6 +47,28 @@ pip install -e .[analysis]
 
 After installing (`pip install -e .`), you can run this fork through Inspect directly.
 
+Set model API credentials before running eval commands:
+
+```bash
+# Linux / macOS (bash/zsh)
+export OPENAI_API_KEY="sk-..."
+```
+
+```powershell
+# Windows PowerShell (current terminal)
+$env:OPENAI_API_KEY="sk-..."
+```
+
+```powershell
+# Windows PowerShell (persist for future terminals)
+setx OPENAI_API_KEY "sk-..."
+```
+
+```bash
+# Verify key is visible to Python
+python -c "import os; print(bool(os.getenv('OPENAI_API_KEY')))"
+```
+
 List available tasks:
 
 ```bash
