@@ -20,7 +20,7 @@ pip install -e .
 # Linux / macOS (bash/zsh)
 export OPENAI_API_KEY="sk-..."
 
-# Windows PowerShell (current terminal) 
+# Windows PowerShell
 $env:OPENAI_API_KEY="sk-..."
 ```
 
