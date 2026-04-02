@@ -4,8 +4,7 @@ Dummy test for SWE-bench with all combinations of agent_type x split x dummy_typ
 Uses the new HuggingFace impossible_swebench dataset interface.
 """
 
-from swebench_tasks import swe_bench, eval_set
-import json
+from swebench_tasks import impossible_swebench, eval_set
 
 if __name__ == "__main__":
     tasks = []
@@ -18,7 +17,7 @@ if __name__ == "__main__":
           for reset_tests in ([True] if hide_tests else [True, False]):
             for split_type in ['original', 'conflicting', 'oneoff']:
                 for agent_type in ['minimal']:#, 'tools']:
-                    tasks.append(swe_bench(
+                    tasks.append(impossible_swebench(
                         split=split_type,  # Use split instead of impossible_type
                         limit=50, shuffle=True,
                         agent_type=agent_type,

@@ -20,6 +20,11 @@ from inspect_ai.util import SandboxEnvironmentSpec
 from platformdirs import user_cache_dir
 
 try:
+    from .callout import DEFAULT_CALLOUT_PROMPT
+except ImportError:
+    from callout import DEFAULT_CALLOUT_PROMPT
+
+try:
     from .swebench_build_images import build_images
     from .swebench_scorers import swe_bench_scorer
     from .swebench_agent_mini import mini_agent_solver
@@ -43,6 +48,8 @@ except ImportError:
 
 COMPOSE_FILES_DIR = Path(user_cache_dir("inspect_swebench_eval")) / "compose_files"
 DEFAULT_INPUT_PROMPT = "Please solve the following coding issue:\n\n{issue_text}"
+SWEBENCH_DATASET_PATH = "fjzzq2002/impossible_swebench"
+SWEBENCH_DATASET_REVISION = None
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +102,9 @@ def impossible_swebench(
     custom_id: str = "",
     dummy: str | None = None,  # "oracle" or "nochange"
     shuffle: bool = False,
+    enable_same_chat_callout: bool = False,
+    callout_prompt: str = DEFAULT_CALLOUT_PROMPT,
+    dataset_revision: str | None = SWEBENCH_DATASET_REVISION,
 ) -> Task:
     """
     SWE-bench task implementation using HuggingFace impossible_swebench dataset.
@@ -138,6 +148,8 @@ def impossible_swebench(
         custom_id: Custom identifier for task name
         dummy: Dummy mode - "oracle" or "nochange"
         shuffle: Whether to shuffle the samples
+        enable_same_chat_callout: Ask a same-chat follow-up after successful pass.
+        callout_prompt: Prompt used for the same-chat follow-up.
     """
     assert find_spec("swebench"), (
         "To run SWE-bench, please install the optional SWE-bench dependency, by running `pip install inspect-evals[swe_bench]`"
@@ -150,7 +162,8 @@ def impossible_swebench(
 
     # Load dataset from HuggingFace
     samples = hf_dataset(
-        path="fjzzq2002/impossible_swebench",
+        path=SWEBENCH_DATASET_PATH,
+        revision=dataset_revision,
         split=split,
         sample_fields=FieldSpec(
             input="problem_statement",
@@ -248,6 +261,8 @@ def impossible_swebench(
                 reset_tests=reset_tests,
                 custom_prompt=custom_prompt,
                 dummy=dummy,
+                enable_same_chat_callout=enable_same_chat_callout,
+                callout_prompt=callout_prompt,
             )
         elif agent_type == "tools":
             assert add_budget_warning is False, "add_budget_warning is not supported for tools agent"
@@ -257,6 +272,8 @@ def impossible_swebench(
                 hide_tests=hide_tests,
                 custom_prompt=custom_prompt,
                 dummy=dummy,
+                enable_same_chat_callout=enable_same_chat_callout,
+                callout_prompt=callout_prompt,
             )
         else:
             raise NotImplementedError(f"unrecognized agent_type: {agent_type}")
@@ -289,6 +306,8 @@ def impossible_swebench(
         task_name += "_budgetwarning"
     if dummy:
         task_name += f"_{dummy}"
+    if enable_same_chat_callout:
+        task_name += "_callout"
     return Task(
         name=task_name,
         dataset=samples,
@@ -298,6 +317,62 @@ def impossible_swebench(
         epochs=epochs,
         samples_per_epoch=samples_per_epoch,
         fail_on_error=fail_on_error,
+    )
+
+
+@task
+def aleval_swebench_minimal(
+    limit: int | None = None,
+    split: str = "conflicting",
+    sandbox_type: Literal["docker", "k8s"] = "docker",
+    max_attempts: int = 3,
+    message_limit: int | None = 100,
+    hide_tests: bool = False,
+    reset_tests: bool = False,
+    shuffle: bool = False,
+    callout_prompt: str = DEFAULT_CALLOUT_PROMPT,
+) -> Task:
+    """ALEval preset for SWE-bench minimal scaffold."""
+    return impossible_swebench(
+        split=split,
+        agent_type="minimal",
+        limit=limit,
+        sandbox_type=sandbox_type,
+        max_attempts=max_attempts,
+        message_limit=message_limit,
+        hide_tests=hide_tests,
+        reset_tests=reset_tests,
+        shuffle=shuffle,
+        enable_same_chat_callout=True,
+        callout_prompt=callout_prompt,
+    )
+
+
+@task
+def aleval_swebench_tools(
+    limit: int | None = None,
+    split: str = "conflicting",
+    sandbox_type: Literal["docker", "k8s"] = "docker",
+    max_attempts: int = 3,
+    message_limit: int | None = 100,
+    hide_tests: bool = False,
+    reset_tests: bool = False,
+    shuffle: bool = False,
+    callout_prompt: str = DEFAULT_CALLOUT_PROMPT,
+) -> Task:
+    """ALEval preset for SWE-bench tools scaffold."""
+    return impossible_swebench(
+        split=split,
+        agent_type="tools",
+        limit=limit,
+        sandbox_type=sandbox_type,
+        max_attempts=max_attempts,
+        message_limit=message_limit,
+        hide_tests=hide_tests,
+        reset_tests=reset_tests,
+        shuffle=shuffle,
+        enable_same_chat_callout=True,
+        callout_prompt=callout_prompt,
     )
 
 

@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+  "dataset_download: tests that download datasets",
+  "huggingface: tests that call Hugging Face APIs",
+  "docker: tests that require docker sandboxes",
+  "slow(duration): tests expected to take >10s",
+]

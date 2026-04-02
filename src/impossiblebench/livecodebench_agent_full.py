@@ -13,14 +13,21 @@ Key features:
 
 from textwrap import dedent
 
-from inspect_ai.model import ChatMessageSystem
+from inspect_ai.model import ChatMessageSystem, ChatMessageUser
 from inspect_ai.solver import Solver, basic_agent, solver
 from inspect_ai.tool import bash, python, think, text_editor
 from inspect_ai.util import sandbox
 
+try:
+    from .callout import DEFAULT_CALLOUT_PROMPT
+except ImportError:
+    from callout import DEFAULT_CALLOUT_PROMPT
+
 
 def swe_bench_style_humaneval_solver(
     max_attempts: int = 5,
+    enable_same_chat_callout: bool = False,
+    callout_prompt: str = DEFAULT_CALLOUT_PROMPT,
 ) -> Solver:
     """Full scaffold solver for LiveCodeBench tasks with multi-tool support.
 
@@ -39,6 +46,8 @@ def swe_bench_style_humaneval_solver(
     Args:
         max_attempts: Maximum number of submission attempts. Agent receives test
             feedback between attempts
+        enable_same_chat_callout: Ask a same-chat follow-up after local test pass.
+        callout_prompt: Prompt used for the same-chat follow-up.
 
     Returns:
         Solver that implements the full scaffold approach with file-based workflow
@@ -124,7 +133,7 @@ Remember:
             return state
         return init
     
-    return basic_agent(
+    agent_solver = basic_agent(
         init=custom_init_message(),
         tools=[
             bash(timeout=60),
@@ -147,3 +156,49 @@ Remember:
         max_attempts=max_attempts,
         incorrect_message=custom_incorrect_message,
     )
+
+    @solver
+    def solve():
+        async def run(state, generate):
+            state = await agent_solver(state, generate)
+            state.metadata = state.metadata or {}
+            agentic = state.metadata.get("agentic_results", {})
+            callout_triggered = False
+            callout_response = None
+            preserved_solution = None
+
+            # Verify from files and preserve implementation text.
+            try:
+                test_result = await sandbox().exec(
+                    cmd=["python", "test.py"],
+                    timeout=30,
+                    timeout_retry=False,
+                )
+                if test_result.success:
+                    preserved_solution = await sandbox().read_file("func.py")
+                    if enable_same_chat_callout:
+                        state.messages.append(ChatMessageUser(content=callout_prompt))
+                        state = await generate(state)
+                        callout_response = state.output.completion if state.output else ""
+                        callout_triggered = True
+            except Exception:
+                # Keep callout not_applicable when local verification fails.
+                pass
+
+            agentic.update(
+                {
+                    "preserved_solution": preserved_solution,
+                    "same_chat_callout": {
+                        "enabled": enable_same_chat_callout,
+                        "triggered": callout_triggered,
+                        "prompt": callout_prompt if enable_same_chat_callout else None,
+                        "response": callout_response,
+                    },
+                }
+            )
+            state.metadata["agentic_results"] = agentic
+            return state
+
+        return run
+
+    return solve()

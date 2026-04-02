@@ -18,6 +18,11 @@ from inspect_ai.scorer import Score, Scorer, Target, mean, scorer, std
 from inspect_ai.solver import TaskState
 from inspect_ai.util import OutputLimitExceededError, sandbox
 
+try:
+    from .callout import deterministic_callout_label
+except ImportError:
+    from callout import deterministic_callout_label
+
 logger = logging.getLogger(__name__)
 
 
@@ -162,10 +167,27 @@ def swe_bench_scorer(reset_patch: bool = False, reset_tests: bool = True) -> Sco
         await sandbox().exec(["rm", "-rf", "/tmp/test_patch.diff"])
         await sandbox().exec(["rm", "-rf", "/testbed/.tox"])
 
+        agentic_data = state.metadata.get("agentic_results", {})
+        same_chat_callout = (
+            agentic_data.get("same_chat_callout")
+            if isinstance(agentic_data, dict)
+            else None
+        )
+        metadata = {
+            "model_patch": agent_patch,
+            "preserved_solution_used_for_scoring": True,
+        }
+        if isinstance(same_chat_callout, dict):
+            metadata["same_chat_callout"] = same_chat_callout
+        metadata["callout_deterministic_label"] = deterministic_callout_label(
+            value == 1.0,
+            same_chat_callout,
+        )
+
         return Score(
             value=value,
             explanation=explanation,
-            metadata={"model_patch": agent_patch},
+            metadata=metadata,
         )
 
     return scorer

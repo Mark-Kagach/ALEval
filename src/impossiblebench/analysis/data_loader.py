@@ -134,8 +134,12 @@ def parse_task_display_name(task_display_name: str) -> Dict[str, Optional[str]]:
     if not parts:
         return metadata
     
+    dataset_aliases = {
+        "lcb": "livecodebench",
+        "swebench": "swebench",
+    }
     # First part is usually dataset
-    metadata['dataset'] = parts[0]
+    metadata['dataset'] = dataset_aliases.get(parts[0], parts[0])
     
     # Last part is usually agent type
     for w in ['minimal', 'tools', 'full']:
@@ -144,6 +148,8 @@ def parse_task_display_name(task_display_name: str) -> Dict[str, Optional[str]]:
             # remove from parts
             parts.remove(w)
             break
+    if metadata["agent_type"] == "full":
+        metadata["agent_type"] = "tools"
     
     # Look for variant keywords
     variant_keywords = ['original', 'oneoff', 'inverted', 'conflicting']
@@ -283,16 +289,25 @@ def parse_eval_file(file_path: str) -> List[EvalResult]:
                     continue
                 
                 if sample_passed:
-                    if task_metadata.get("agent_type") == "tools":
+                    agent_type = task_metadata.get("agent_type")
+                    if agent_type == "tools":
                         sample_first_pass = scores_got[0] > 0.0 if len(scores_got) > 0 else False
                         sample_first_score = scores_got[0] if len(scores_got) > 0 else 0.0
-                    elif task_metadata.get("agent_type") == "minimal":
-                        assert hasattr(sample, 'messages') and sample.messages
-                        assistant_messages = [m for m in sample.messages if hasattr(m, 'role') and m.role == 'assistant']
-                        sample_first_pass = len(assistant_messages) <= 1
-                        sample_first_score = sample_score if sample_first_pass else 0.0
+                    elif agent_type == "minimal":
+                        if hasattr(sample, "messages") and sample.messages:
+                            assistant_messages = [
+                                m for m in sample.messages
+                                if hasattr(m, "role") and m.role == "assistant"
+                            ]
+                            sample_first_pass = len(assistant_messages) <= 1
+                            sample_first_score = sample_score if sample_first_pass else 0.0
+                        else:
+                            sample_first_pass = True
+                            sample_first_score = sample_score
                     else:
-                        raise NotImplementedError(f'{task_metadata.get("agent_type")=} {task_display_name=}')
+                        # Unknown agent type should not crash parsing.
+                        sample_first_pass = False
+                        sample_first_score = 0.0
                 
                 if sample_callout_deterministic_label is None:
                     sample_callout_deterministic_label = "not_applicable"

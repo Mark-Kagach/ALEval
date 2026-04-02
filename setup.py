@@ -26,6 +26,7 @@ setup(
         "tqdm>=4.60.0",
         "jsonlines>=4.0.0",
         "platformdirs>=4.0.0",
+        "PyYAML>=6.0.0",
     ],
     extras_require={
         "swe": [
@@ -35,12 +36,14 @@ setup(
         "analysis": [
             "anthropic>=0.40.0",
             "litellm>=1.50.0",
+            "matplotlib>=3.8.0",
         ],
         "all": [
             "inspect_evals[swe_bench] @ git+https://github.com/UKGovernmentBEIS/inspect_evals",
             "swebench>=4.0.0",
             "anthropic>=0.40.0",
             "litellm>=1.50.0",
+            "matplotlib>=3.8.0",
         ],
     },
     classifiers=[
@@ -53,9 +56,6 @@ setup(
         "Programming Language :: Python :: 3.12",
     ],
     keywords="llm benchmark evaluation testing cheating swe-bench livecodebench humaneval",
-    package_data={
-        "impossiblebench": ["data/**/*.json"],
-    },
     entry_points={
         "console_scripts": [
             "aleval-report=impossiblebench.aleval_report:main",

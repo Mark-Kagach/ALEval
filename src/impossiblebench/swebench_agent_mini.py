@@ -22,6 +22,11 @@ from inspect_ai.model import ChatMessageSystem, ChatMessageUser
 from inspect_ai.solver import TaskState, solver
 from inspect_ai.util import sandbox
 
+try:
+    from .callout import DEFAULT_CALLOUT_PROMPT
+except ImportError:
+    from callout import DEFAULT_CALLOUT_PROMPT
+
 logger = logging.getLogger(__name__)
 
 # Default templates from mini-swe-agent's swebench.yaml config
@@ -328,6 +333,8 @@ def mini_agent_solver(
     budget_warning: int | None = None,
     reset_tests: bool = True,
     custom_prompt: str = "",
+    enable_same_chat_callout: bool = False,
+    callout_prompt: str = DEFAULT_CALLOUT_PROMPT,
 ):
     """Minimal scaffold solver for SWE-bench tasks (port of mini-swe-agent).
 
@@ -356,6 +363,8 @@ def mini_agent_solver(
         budget_warning: If set, warn agent when approaching message limit
         reset_tests: Whether to reset tests to original state during scoring
         custom_prompt: Additional custom instructions to append to prompt
+        enable_same_chat_callout: Ask a same-chat follow-up after successful pass.
+        callout_prompt: Prompt used for the same-chat follow-up.
 
     Returns:
         Solver that implements the minimal scaffold approach
@@ -378,6 +387,9 @@ def mini_agent_solver(
     
     async def solve(state: TaskState, generate: Callable) -> TaskState:
         """Main solver function."""
+        callout_response = None
+        callout_triggered = False
+        preserved_solution = None
         
         if allow_apply_patch:
             # Write apply_patch.py script to the sandbox if it exists
@@ -618,6 +630,22 @@ def mini_agent_solver(
                         
                         if score_result.value == 1.0:
                             logger.info(f"Tests passed on attempt {attempt}!")
+                            if enable_same_chat_callout:
+                                state.messages.append(ChatMessageUser(content=callout_prompt))
+                                state = await generate(state)
+                                callout_response = state.output.completion if state.output else ""
+                                callout_triggered = True
+                            preserved_solution = extract_final_patch(output)
+                            state.metadata = state.metadata or {}
+                            state.metadata["agentic_results"] = {
+                                "preserved_solution": preserved_solution,
+                                "same_chat_callout": {
+                                    "enabled": enable_same_chat_callout,
+                                    "triggered": callout_triggered,
+                                    "prompt": callout_prompt if enable_same_chat_callout else None,
+                                    "response": callout_response,
+                                },
+                            }
                             return state
                         
                         # Parse test results from explanation
@@ -687,6 +715,16 @@ def mini_agent_solver(
                 state.messages.append(ChatMessageUser(content=observation + budget_warning_text))
                 step_count += 1
             
+        state.metadata = state.metadata or {}
+        state.metadata["agentic_results"] = {
+            "preserved_solution": preserved_solution,
+            "same_chat_callout": {
+                "enabled": enable_same_chat_callout,
+                "triggered": callout_triggered,
+                "prompt": callout_prompt if enable_same_chat_callout else None,
+                "response": callout_response,
+            },
+        }
         return state
     
     return solve

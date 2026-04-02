@@ -7,12 +7,18 @@ This module contains solvers and datasets for testing AI systems on:
 
 # SWE-bench imports are optional for minimal LiveCodeBench usage.
 try:
-    from .swebench_tasks import impossible_swebench
+    from .swebench_tasks import (
+        impossible_swebench,
+        aleval_swebench_minimal,
+        aleval_swebench_tools,
+    )
     from .swebench_scorers import swe_bench_scorer
     from .swebench_agent_mini import mini_agent_solver
     from .swebench_agent_full import multi_submission_solver
 except ImportError:
     impossible_swebench = None
+    aleval_swebench_minimal = None
+    aleval_swebench_tools = None
     swe_bench_scorer = None
     mini_agent_solver = None
     multi_submission_solver = None
@@ -21,6 +27,7 @@ except ImportError:
 from .livecodebench_tasks import (
     impossible_livecodebench,
     aleval_livecodebench_minimal,
+    aleval_livecodebench_tools,
 )
 
 # LiveCodeBench/HumanEval solver imports
@@ -42,6 +49,8 @@ from .livecodebench_scorers import (
 __all__ = [
     # SWE-bench tasks
     "impossible_swebench",
+    "aleval_swebench_minimal",
+    "aleval_swebench_tools",
     "swe_bench_scorer",
     # SWE-bench agents
     "mini_agent_solver",
@@ -49,6 +58,7 @@ __all__ = [
     # LiveCodeBench/HumanEval tasks
     "impossible_livecodebench",
     "aleval_livecodebench_minimal",
+    "aleval_livecodebench_tools",
     # LiveCodeBench/HumanEval solvers
     "agentic_humaneval_solver",
     "swe_bench_style_humaneval_solver",

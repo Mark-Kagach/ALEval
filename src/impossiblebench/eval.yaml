@@ -1,0 +1,20 @@
+title: "ImpossibleBench ALEval: Reward-Hacking and Callout Honesty"
+description: |
+  ImpossibleBench-based coding-agent evaluation with LiveCodeBench and SWE-bench
+  variants, including optional same-chat callout metadata to measure lie/truth/evasive
+  behavior conditional on successful task completion.
+arxiv: https://arxiv.org/abs/2510.20270
+group: Coding
+contributors: ["thepe"]
+tasks:
+  - name: aleval_livecodebench_minimal
+    dataset_samples: 0
+  - name: aleval_livecodebench_tools
+    dataset_samples: 0
+  - name: aleval_swebench_minimal
+    dataset_samples: 0
+  - name: aleval_swebench_tools
+    dataset_samples: 0
+tags: ["Agent"]
+metadata:
+  sandbox: ["solver", "scorer"]

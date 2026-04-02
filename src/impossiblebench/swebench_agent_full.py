@@ -17,16 +17,28 @@ import re
 from pathlib import Path
 from textwrap import dedent
 
-from inspect_ai.agent import Agent, agent
-from inspect_ai.model import ChatMessageSystem
+from inspect_ai.model import ChatMessageSystem, ChatMessageUser
 from inspect_ai.solver import Solver, basic_agent, solver
 from inspect_ai.tool import bash, python, think, text_editor
 from inspect_ai.util import sandbox
 
+try:
+    from .callout import DEFAULT_CALLOUT_PROMPT
+except ImportError:
+    from callout import DEFAULT_CALLOUT_PROMPT
+
 logger = logging.getLogger(__name__)
 
 
-def multi_submission_solver(max_attempts: int = 10, human_intervention: bool = False, hide_tests: bool = False, custom_prompt: str = "", dummy: str = None) -> Solver:
+def multi_submission_solver(
+    max_attempts: int = 10,
+    human_intervention: bool = False,
+    hide_tests: bool = False,
+    custom_prompt: str = "",
+    dummy: str = None,
+    enable_same_chat_callout: bool = False,
+    callout_prompt: str = DEFAULT_CALLOUT_PROMPT,
+) -> Solver:
     """Full scaffold solver for SWE-bench tasks with multi-tool support.
 
     This solver uses Inspect AI's tool calling framework (bash, python, text_editor,
@@ -43,6 +55,8 @@ def multi_submission_solver(max_attempts: int = 10, human_intervention: bool = F
         custom_prompt: Additional custom instructions to append to prompt
         dummy: Dummy mode for testing. "oracle" applies the correct patch, "nochange"
             submits without modifications
+        enable_same_chat_callout: Ask same-chat follow-up after submission.
+        callout_prompt: Prompt used for the same-chat follow-up.
 
     Returns:
         Solver that implements the full scaffold approach with multiple tools
@@ -225,7 +239,7 @@ inspect-tool-support post-install || true"""
             return state
         return init
 
-    return basic_agent(
+    agent_solver = basic_agent(
         init=custom_init_message(),
         tools=[
             bash(timeout=60),
@@ -248,6 +262,40 @@ inspect-tool-support post-install || true"""
         max_attempts=max_attempts,
         incorrect_message=custom_incorrect_message,
     )
+
+    @solver
+    def solve():
+        async def run(state, generate):
+            state = await agent_solver(state, generate)
+            state.metadata = state.metadata or {}
+            agentic = state.metadata.get("agentic_results", {})
+            callout_triggered = False
+            callout_response = None
+
+            completion = state.output.completion if state.output else ""
+            submitted = (
+                "COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT" in completion
+                or "MINI_SWE_AGENT_FINAL_OUTPUT" in completion
+                or "[flag_for_human_intervention]" in completion
+            )
+            if enable_same_chat_callout and submitted:
+                state.messages.append(ChatMessageUser(content=callout_prompt))
+                state = await generate(state)
+                callout_response = state.output.completion if state.output else ""
+                callout_triggered = True
+
+            agentic["same_chat_callout"] = {
+                "enabled": enable_same_chat_callout,
+                "triggered": callout_triggered,
+                "prompt": callout_prompt if enable_same_chat_callout else None,
+                "response": callout_response,
+            }
+            state.metadata["agentic_results"] = agentic
+            return state
+
+        return run
+
+    return solve()
 
 
 def _get_default_template(test_info: str, max_attempts: int, prompt_suffix: str) -> str:
