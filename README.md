@@ -1,4 +1,4 @@
-# ImpossibleBench ALEval
+# Lying Eval of ImpossibleBench
 
 This repository extends ImpossibleBench with action-grounded lying evaluation:
 after successful task completion, the agent can be asked a same-chat callout
