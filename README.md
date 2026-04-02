@@ -138,10 +138,22 @@ After eval logs are produced:
 aleval-report --logs-dir ./logs/aleval_real --out-dir ./reports/aleval_real
 ```
 
+If you just pulled new changes, refresh the editable install first:
+
+```bash
+pip install -e .
+```
+
 Optional latest file only:
 
 ```bash
 aleval-report --logs-dir ./logs/aleval_real --out-dir ./reports/aleval_real --latest-only
+```
+
+Equivalent module form (works even if shell entrypoints are stale):
+
+```bash
+python -m impossiblebench.aleval_report --logs-dir ./logs/aleval_real --out-dir ./reports/aleval_real
 ```
 
 Outputs:
@@ -183,6 +195,9 @@ Open [http://localhost:7575](http://localhost:7575) and inspect per-sample score
 - `No module named impossiblebench` or stale imports:
   - run `pip install -e .`
   - if running from source, set `PYTHONPATH=src`.
+- `aleval-report` fails to resolve module after pulling updates:
+  - rerun `pip install -e .` to refresh console scripts
+  - or use `python -m impossiblebench.aleval_report ...`.
 - Windows install fails while cloning `inspect_evals`:
   - this fork no longer requires SWE dependencies for base install.
   - run `pip install -e .` for minimal ALEval path.

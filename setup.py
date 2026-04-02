@@ -58,7 +58,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "aleval-report=judge_eval:main",
+            "aleval-report=impossiblebench.aleval_report:main",
         ],
     },
     include_package_data=True,
