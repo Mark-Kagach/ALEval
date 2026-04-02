@@ -55,12 +55,9 @@ export OPENAI_API_KEY="sk-..."
 ```
 
 ```powershell
-# Windows PowerShell (current terminal)
+# Windows PowerShell (current terminal) 
 $env:OPENAI_API_KEY="sk-..."
-```
-
-```powershell
-# Windows PowerShell (persist for future terminals)
+# Or to persist for future terminals:
 setx OPENAI_API_KEY "sk-..."
 ```
 
