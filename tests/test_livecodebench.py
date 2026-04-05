@@ -1,6 +1,6 @@
 from inspect_ai.dataset import Sample
 
-from impossiblebench.livecodebench_tasks import record_to_sample
+from impossiblebench.lcb.tasks import record_to_sample
 
 
 def test_record_to_sample_from_dataset_record():

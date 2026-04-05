@@ -1,0 +1,38 @@
+ALEval (ImpossibleBench Fork)
+Copyright 2026 ALEval Authors
+
+This product is licensed under the MIT License. It includes code from
+third-party projects, as noted below.
+
+---
+
+mini-swe-agent
+Copyright 2024 SWE-agent Authors
+Source: https://github.com/SWE-agent/mini-swe-agent
+License: MIT
+
+Included in (adapted):
+  src/impossiblebench/swe/solver_minimal.py
+
+---
+
+SWE-bench
+Copyright 2024 Princeton NLP Group
+Source: https://github.com/princeton-nlp/SWE-bench
+License: MIT
+
+Included in (partially copied):
+  src/impossiblebench/swe/build_images.py
+  src/impossiblebench/swe/scorers.py
+
+---
+
+ImpossibleBench
+Copyright 2024 ImpossibleBench Authors
+Source: https://github.com/fjzzq2002/impossiblebench
+
+Included in (adapted):
+  src/impossiblebench/lcb/scorers.py
+  src/impossiblebench/lcb/tasks.py
+  src/impossiblebench/lcb/solver_minimal.py
+  src/impossiblebench/lcb/solver_tools.py

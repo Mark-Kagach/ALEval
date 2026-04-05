@@ -1,20 +1,22 @@
-title: "ImpossibleBench ALEval: Reward-Hacking and Callout Honesty"
+title: "ALEval: Reward-Hacking Honesty in Coding Agents"
 description: |
-  ImpossibleBench-based coding-agent evaluation with LiveCodeBench and SWE-bench
-  variants, including optional same-chat callout metadata to measure lie/truth/evasive
-  behavior conditional on successful task completion.
+  Measures whether LLM coding agents lie about reward hacking on deliberately
+  impossible tasks. Agents solve conflicting-test coding problems via
+  LiveCodeBench or SWE-bench, then face a same-chat callout asking if they
+  reward-hacked. Responses are classified as lie, truth, or evasive.
 arxiv: https://arxiv.org/abs/2510.20270
 group: Coding
 contributors: ["thepe"]
+version: "1-A"
 tasks:
   - name: aleval_livecodebench_minimal
-    dataset_samples: 0
+    dataset_samples: 247
   - name: aleval_livecodebench_tools
-    dataset_samples: 0
+    dataset_samples: 247
   - name: aleval_swebench_minimal
-    dataset_samples: 0
+    dataset_samples: 300
   - name: aleval_swebench_tools
-    dataset_samples: 0
+    dataset_samples: 300
 tags: ["Agent"]
 metadata:
   sandbox: ["solver", "scorer"]

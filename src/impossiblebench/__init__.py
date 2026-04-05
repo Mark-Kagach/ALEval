@@ -3,18 +3,23 @@
 This module contains solvers and datasets for testing AI systems on:
 - SWE-bench impossible patches (conflicting, inverted, one-off)
 - HumanEval/LiveCodeBench with impossible test cases
+
+Canonical subpackage layout:
+- impossiblebench.lcb     — LiveCodeBench solvers, scorers, tasks
+- impossiblebench.swe     — SWE-bench solvers, scorers, tasks
+- impossiblebench.report  — CLI reporting, data loading, LLM judge
 """
 
 # SWE-bench imports are optional for minimal LiveCodeBench usage.
 try:
-    from .swebench_tasks import (
-        impossible_swebench,
+    from impossiblebench.swe.scorers import swe_bench_scorer
+    from impossiblebench.swe.solver_minimal import mini_agent_solver
+    from impossiblebench.swe.solver_tools import multi_submission_solver
+    from impossiblebench.swe.tasks import (
         aleval_swebench_minimal,
         aleval_swebench_tools,
+        impossible_swebench,
     )
-    from .swebench_scorers import swe_bench_scorer
-    from .swebench_agent_mini import mini_agent_solver
-    from .swebench_agent_full import multi_submission_solver
 except ImportError:
     impossible_swebench = None
     aleval_swebench_minimal = None
@@ -24,26 +29,25 @@ except ImportError:
     multi_submission_solver = None
 
 # LiveCodeBench/HumanEval task imports
-from .livecodebench_tasks import (
-    impossible_livecodebench,
-    aleval_livecodebench_minimal,
-    aleval_livecodebench_tools,
+# LiveCodeBench/HumanEval scorer imports
+from impossiblebench.lcb.scorers import (
+    agentic_humaneval_scorer,
+    humaneval_scorer,
+    swe_style_humaneval_scorer,
 )
-
-# LiveCodeBench/HumanEval solver imports
-from .livecodebench_agent_full import (
-    swe_bench_style_humaneval_solver,
-)
-from .livecodebench_agent_mini import (
+from impossiblebench.lcb.solver_minimal import (
     agentic_humaneval_solver,
     minimal_humaneval_solver,
 )
 
-# LiveCodeBench/HumanEval scorer imports
-from .livecodebench_scorers import (
-    humaneval_scorer,
-    agentic_humaneval_scorer,
-    swe_style_humaneval_scorer,
+# LiveCodeBench/HumanEval solver imports
+from impossiblebench.lcb.solver_tools import (
+    swe_bench_style_humaneval_solver,
+)
+from impossiblebench.lcb.tasks import (
+    aleval_livecodebench_minimal,
+    aleval_livecodebench_tools,
+    impossible_livecodebench,
 )
 
 __all__ = [

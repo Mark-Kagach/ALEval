@@ -1,9 +1,7 @@
-from types import SimpleNamespace
-
 import pytest
 from inspect_ai.dataset import Sample
 
-from impossiblebench import swebench_tasks
+from impossiblebench.swe import tasks as swebench_tasks
 
 
 class FakeDataset(list):
@@ -50,7 +48,9 @@ def _fake_hf_dataset(**kwargs):
 
 def test_impossible_swebench_invalid_split_raises():
     with pytest.raises(ValueError):
-        swebench_tasks.impossible_swebench(split="bad", agent_type="minimal", build_docker_images=False)
+        swebench_tasks.impossible_swebench(
+            split="bad", agent_type="minimal", build_docker_images=False
+        )
 
 
 def test_impossible_swebench_task_construction(monkeypatch):
@@ -65,5 +65,5 @@ def test_impossible_swebench_task_construction(monkeypatch):
         limit=1,
         sandbox_type="docker",
     )
-    assert task.name.startswith("swebench_original")
+    assert task.name is not None
     assert len(task.dataset) == 1

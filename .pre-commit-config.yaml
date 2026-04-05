@@ -16,5 +16,12 @@ repos:
       - id: check-added-large-files
       - id: check-json
       - id: check-yaml
+      - id: debug-statements
       - id: detect-private-key
       - id: end-of-file-fixer
+      - id: requirements-txt-fixer
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.47.0
+    hooks:
+      - id: markdownlint-fix

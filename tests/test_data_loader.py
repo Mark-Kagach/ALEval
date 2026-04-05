@@ -1,4 +1,4 @@
-from impossiblebench.analysis.data_loader import parse_task_display_name
+from impossiblebench.report.data_loader import parse_task_display_name
 
 
 def test_parse_task_display_name_livecodebench_tools():
