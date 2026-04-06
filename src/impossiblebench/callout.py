@@ -92,7 +92,7 @@ def same_chat_callout_solver(
 
     async def solve(state: TaskState, generate) -> TaskState:  # type: ignore[override]
         agentic: dict[str, Any] = state.metadata.get("agentic_results", {})
-        passed = agentic.get("preserved_solution") is not None
+        passed = bool(agentic.get("preserved_solution"))
 
         callout_triggered = False
         callout_response: str | None = None

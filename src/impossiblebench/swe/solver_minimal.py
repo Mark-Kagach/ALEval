@@ -278,7 +278,13 @@ def check_submission(output: str) -> bool:
 
 
 def extract_final_patch(output: str) -> str:
-    """Extract the git diff patch from submission output."""
+    """Extract the git diff patch from submission output.
+
+    NOTE: This is a legacy helper that parses stdout.  In the SWE-bench
+    scaffold the agent typically submits with a bare ``echo`` command, so
+    stdout does not contain a git diff.  Prefer :func:`capture_sandbox_patch`
+    for reliable patch capture.
+    """
     # Look for git diff output after submission marker
     lines = output.split("\n")
     for i, line in enumerate(lines):
@@ -286,6 +292,34 @@ def extract_final_patch(output: str) -> str:
             # Return everything after the marker (should be git diff output)
             return "\n".join(lines[i + 1 :])
     return output
+
+
+async def capture_sandbox_patch(base_commit: str) -> str:
+    """Capture the actual git diff from the sandbox working tree.
+
+    Runs ``git add -A && git diff --cached <base_commit>`` inside the
+    sandbox, which is the same mechanism the scorer uses (see
+    ``scorers.CREATE_MODEL_PATCH``).  Returns the diff string, or an
+    empty string if no changes were made or the command fails.
+    """
+    try:
+        result = await sandbox().exec(
+            [
+                "bash",
+                "-c",
+                f"cd /testbed && git add -A && git diff --cached {base_commit}",
+            ],
+            timeout=30,
+        )
+        patch = result.stdout.strip() if result.stdout else ""
+        if patch:
+            logger.info(f"Captured sandbox patch ({len(patch)} chars)")
+        else:
+            logger.warning("Sandbox patch is empty — agent may not have made changes")
+        return patch
+    except Exception as e:
+        logger.warning(f"Failed to capture sandbox patch: {e}")
+        return ""
 
 
 def format_test_feedback(
@@ -635,6 +669,13 @@ def mini_agent_solver(
 
                     # If this is the last attempt or multi-submission is disabled, we're done
                     if attempt >= max_attempts or max_attempts == 1:
+                        preserved_solution = await capture_sandbox_patch(
+                            state.metadata["base_commit"]
+                        )
+                        state.metadata = state.metadata or {}
+                        state.metadata["agentic_results"] = {
+                            "preserved_solution": preserved_solution,
+                        }
                         return state
 
                     # Run tests and get feedback for multi-submission
@@ -646,11 +687,21 @@ def mini_agent_solver(
                         score_result = await scorer(state, None)
 
                         if state.completed:
+                            # Ensure metadata is written even on early completion
+                            preserved_solution = await capture_sandbox_patch(
+                                state.metadata["base_commit"]
+                            )
+                            state.metadata = state.metadata or {}
+                            state.metadata["agentic_results"] = {
+                                "preserved_solution": preserved_solution,
+                            }
                             return state
 
                         if score_result.value == 1.0:
                             logger.info(f"Tests passed on attempt {attempt}!")
-                            preserved_solution = extract_final_patch(output)
+                            preserved_solution = await capture_sandbox_patch(
+                                state.metadata["base_commit"]
+                            )
                             state.metadata = state.metadata or {}
                             state.metadata["agentic_results"] = {
                                 "preserved_solution": preserved_solution,
@@ -736,6 +787,13 @@ def mini_agent_solver(
                 state.messages.append(ChatMessageUser(content=observation + budget_warning_text))
                 step_count += 1
 
+        # Fallback: loop exhausted without an earlier return.
+        # Capture the real patch from the sandbox (the local preserved_solution
+        # variable is unreliable — it may still be None or an empty string
+        # from extract_final_patch).
+        preserved_solution = await capture_sandbox_patch(
+            state.metadata["base_commit"]
+        )
         state.metadata = state.metadata or {}
         state.metadata["agentic_results"] = {
             "preserved_solution": preserved_solution,
