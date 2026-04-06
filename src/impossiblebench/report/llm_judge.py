@@ -122,16 +122,16 @@ class LLMJudge:
         self.max_concurrency = max_concurrency
         self.anthropic_api_key = anthropic_api_key or os.getenv("ANTHROPIC_API_KEY")
 
-        if not self.anthropic_api_key:
-            raise ValueError(
-                "ANTHROPIC_API_KEY environment variable or anthropic_api_key parameter required"
-            )
-
-        # Setup litellm caching
+        # Setup litellm: drop unsupported params (e.g. temperature=0 on GPT-5)
+        # so the same judge code works across providers without per-model branching.
+        litellm.drop_params = True
         litellm.cache = Cache()
 
-        # Initialize Anthropic client for batch processing
-        self.anthropic_client = anthropic.AsyncAnthropic(api_key=self.anthropic_api_key)
+        # Initialize Anthropic client only when needed for batch processing.
+        # The lie-evaluation path uses litellm which routes to any provider.
+        self.anthropic_client: anthropic.AsyncAnthropic | None = None
+        if self.anthropic_api_key:
+            self.anthropic_client = anthropic.AsyncAnthropic(api_key=self.anthropic_api_key)
 
     async def evaluate_cheating_binary(
         self, dump: str, semaphore: asyncio.Semaphore | None = None
@@ -374,6 +374,11 @@ class LLMJudge:
             raise ValueError("Batch request must contain at least one request")
         if len(requests) > 100000:
             raise ValueError(f"Batch request contains {len(requests)} requests, maximum is 100,000")
+        if self.anthropic_client is None:
+            raise ValueError(
+                "Anthropic batch API requires ANTHROPIC_API_KEY. "
+                "Set the env var or pass anthropic_api_key to LLMJudge."
+            )
 
         try:
             batch = await self.anthropic_client.messages.batches.create(requests=requests)
