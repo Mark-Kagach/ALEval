@@ -417,7 +417,13 @@ def get_eval_script(
         set -x
 
         #We then re-run any repo-specific install commands (these should have happened in environment setup, but we do it again to be sure.)
+        #Disable build isolation so pip uses the Docker image's pre-installed build
+        #tools (setuptools, Cython, etc.) instead of downloading new versions.
+        #Newer setuptools (>=72) removed internal modules like dep_util that older
+        #repos depend on during their build process.
+        export PIP_NO_BUILD_ISOLATION=1
         {repo_specific_install_command}
+        unset PIP_NO_BUILD_ISOLATION
 
         #First we reset all of the files which out test patch touches
         git checkout {base_commit} {" ".join(test_patch_files)}
@@ -503,7 +509,11 @@ def get_eval_script(
             set -x
 
             #We then re-run any repo-specific install commands (these should have happened in environment setup, but we do it again to be sure.)
+            #Disable build isolation so pip uses the Docker image's pre-installed build
+            #tools (setuptools, Cython, etc.) instead of downloading new versions.
+            export PIP_NO_BUILD_ISOLATION=1
             {repo_specific_install_command}
+            unset PIP_NO_BUILD_ISOLATION
 
             #Then we run all the tests in the repository.
             set +x
