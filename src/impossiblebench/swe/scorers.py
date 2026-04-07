@@ -378,15 +378,20 @@ def get_eval_script(
     if repo == "scikit-learn/scikit-learn":  # Scikit-learn gets upset with the install
         repo_specific_install_command = ""
 
-    # Inject --no-build-isolation into pip install commands so pip uses the
-    # Docker image's pre-installed build tools instead of downloading new ones.
-    # Newer setuptools (>=72) removed internal modules like dep_util that older
-    # repos (e.g. astropy) depend on during their build process.  The env var
-    # PIP_NO_BUILD_ISOLATION is unreliable, so we also patch the command itself.
+    # Fix for setuptools >= 72 removing dep_util that older repos need.
+    # Two-part fix:
+    # 1) Pin setuptools < 72 in the conda env BEFORE building
+    # 2) Inject --no-build-isolation so pip doesn't create a temp build env
+    #    that downloads setuptools 82+ from PyPI
+    # Belt-and-suspenders: either fix alone should work, both together are robust.
+    _setuptools_pin = 'pip install "setuptools<72" 2>/dev/null || true'
     if repo_specific_install_command and "pip install" in repo_specific_install_command:
         repo_specific_install_command = repo_specific_install_command.replace(
             "pip install", "pip install --no-build-isolation"
         )
+        repo_specific_install_command = f"{_setuptools_pin}\n        {repo_specific_install_command}"
+    elif repo_specific_install_command:
+        repo_specific_install_command = f"{_setuptools_pin}\n        {repo_specific_install_command}"
 
     # Find all the files which have been modified by the test patch
     test_patch_files = list(
