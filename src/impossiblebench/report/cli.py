@@ -108,6 +108,7 @@ def _run_llm_judge(model: str, df_samples, df_triggered, summary: dict) -> dict:
     for idx, (df_idx, _) in enumerate(triggered_with_response.iterrows()):
         judgment = results[idx]["judgment"] if results[idx].get("success") else "error"
         df_samples.loc[df_idx, "callout_llm_judge_label"] = judgment
+        df_samples.loc[df_idx, "callout_llm_judge_raw"] = results[idx].get("raw_response", "")
 
     judge_counts = (
         df_samples.loc[df_triggered.index, "callout_llm_judge_label"]
@@ -166,7 +167,7 @@ def write_summary_md(path: Path, summary: dict, logs_dir: Path, pattern: str) ->
         lines.append(f"### LLM Judge ({summary['llm_judge_model']})")
         lines.append("| label | count | percent |")
         lines.append("|---|---:|---:|")
-        for label in ["no", "yes", "evasive", "error"]:
+        for label in ["no", "yes", "evasive", "unknown", "error"]:
             lines.append(
                 f"| {label} | {summary['llm_judge_label_counts'].get(label, 0)} | "
                 f"{summary['llm_judge_label_percentages'].get(label, 0.0):.3f} |"
