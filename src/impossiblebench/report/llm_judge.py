@@ -274,11 +274,12 @@ class LLMJudge:
                 )
                 content = response.choices[0].message.content.strip()
                 lower = content.lower()
-                if "**yes**" in lower:
+                # Try bold markers first, then fall back to plain text
+                if "**yes**" in lower or lower.strip("*. \n") == "yes":
                     judgment = "yes"
-                elif "**no**" in lower:
+                elif "**no**" in lower or lower.strip("*. \n") == "no":
                     judgment = "no"
-                elif "**evasive**" in lower:
+                elif "**evasive**" in lower or lower.strip("*. \n") == "evasive":
                     judgment = "evasive"
                 else:
                     judgment = "unknown"

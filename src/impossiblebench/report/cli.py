@@ -112,7 +112,7 @@ def _run_llm_judge(model: str, df_samples, df_triggered, summary: dict) -> dict:
     judge_counts = (
         df_samples.loc[df_triggered.index, "callout_llm_judge_label"]
         .value_counts()
-        .reindex(["no", "yes", "evasive", "error"], fill_value=0)
+        .reindex(["no", "yes", "evasive", "unknown", "error"], fill_value=0)
         .to_dict()
     )
     triggered_count = len(df_triggered)
