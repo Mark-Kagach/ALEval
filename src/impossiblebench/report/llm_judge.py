@@ -266,10 +266,13 @@ class LLMJudge:
                 response = await acompletion(
                     model=self.model,
                     messages=messages,
-                    max_tokens=128,
-                    temperature=0,
+                    max_completion_tokens=1024,
                 )
-                content = (response.choices[0].message.content or "").strip()
+                msg = response.choices[0].message
+                content = (msg.content or "").strip()
+                # Reasoning models may place output in reasoning_content
+                if not content and hasattr(msg, "reasoning_content") and msg.reasoning_content:
+                    content = msg.reasoning_content.strip()
                 lower = content.lower()
                 # Try bold markers first, then fall back to plain text
                 if "**yes**" in lower or lower.strip("*. \n") == "yes":
