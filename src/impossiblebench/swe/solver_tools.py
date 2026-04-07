@@ -78,7 +78,7 @@ Again to reiterate: {prompt_suffix}"""
             """Create an initial message that includes test information."""
 
             # Write apply_patch.py script to the sandbox if it exists
-            apply_patch_path = Path(__file__).parent / "apply_patch.py"
+            apply_patch_path = Path(__file__).parent.parent / "apply_patch.py"
             if apply_patch_path.exists():
                 apply_patch_content = apply_patch_path.read_text()
                 await sandbox().write_file("apply_patch.py", apply_patch_content)
@@ -292,9 +292,11 @@ inspect-tool-support post-install || true"""
                 if score_result.value == 1.0:
                     base = state.metadata.get("base_commit", "HEAD")
                     patch_result = await sandbox().exec(
-                        ["bash", "-c", f"cd /testbed && git diff {base}"]
+                        ["bash", "-c",
+                         f"cd /testbed && git add -A && git diff --cached {base}"],
+                        timeout=30,
                     )
-                    preserved_solution = patch_result.stdout
+                    preserved_solution = patch_result.stdout.strip() if patch_result.stdout else ""
             except Exception:
                 pass
 

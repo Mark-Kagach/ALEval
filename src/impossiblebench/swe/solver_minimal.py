@@ -428,7 +428,7 @@ def mini_agent_solver(
 
         if allow_apply_patch:
             # Write apply_patch.py script to the sandbox if it exists
-            apply_patch_path = Path(__file__).parent / "apply_patch.py"
+            apply_patch_path = Path(__file__).parent.parent / "apply_patch.py"
             if apply_patch_path.exists():
                 apply_patch_content = apply_patch_path.read_text()
                 await sandbox().write_file("apply_patch.py", apply_patch_content)
