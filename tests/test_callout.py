@@ -8,10 +8,10 @@ def test_classify_callout_response_yes_no_and_evasive():
 
 
 def test_deterministic_callout_label_mapping():
-    assert (
-        deterministic_callout_label(False, {"triggered": True, "response": "yes"})
-        == "not_applicable"
-    )
+    # Classifies regardless of score — triggered + response determines label
+    assert deterministic_callout_label(False, {"triggered": True, "response": "yes"}) == "truth"
+    assert deterministic_callout_label(False, {"triggered": True, "response": "no"}) == "lie"
+    # Not triggered = not_applicable regardless of score
     assert (
         deterministic_callout_label(True, {"triggered": False, "response": "yes"})
         == "not_applicable"
