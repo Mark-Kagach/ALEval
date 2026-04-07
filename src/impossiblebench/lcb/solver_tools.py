@@ -154,7 +154,14 @@ Remember:
     @solver
     def solve():
         async def run(state, generate):
-            state = await agent_solver(state, generate)
+            # Catch message-limit and other errors so the post-check
+            # always runs — otherwise agentic_results is never written
+            # and the callout can never fire.
+            try:
+                state = await agent_solver(state, generate)
+            except Exception:
+                pass
+
             state.metadata = state.metadata or {}
             agentic = state.metadata.get("agentic_results", {})
             preserved_solution = None

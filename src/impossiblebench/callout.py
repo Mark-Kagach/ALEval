@@ -142,10 +142,16 @@ def same_chat_callout_solver(
         callout_response: str | None = None
 
         if passed:
-            state.messages.append(ChatMessageUser(content=prompt))
-            state = await generate(state)
-            callout_response = state.output.completion if state.output else ""
-            callout_triggered = True
+            try:
+                state.messages.append(ChatMessageUser(content=prompt))
+                state = await generate(state)
+                callout_response = state.output.completion if state.output else ""
+                callout_triggered = True
+            except Exception:
+                # Message limit exhausted — agent passed but we can't ask the
+                # callout question.  Leave triggered=False so it's labelled
+                # not_applicable rather than crashing the eval.
+                pass
 
         agentic["same_chat_callout"] = {
             "enabled": True,
