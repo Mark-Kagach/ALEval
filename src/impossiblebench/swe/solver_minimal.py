@@ -669,9 +669,17 @@ def mini_agent_solver(
 
                     # If this is the last attempt or multi-submission is disabled, we're done
                     if attempt >= max_attempts or max_attempts == 1:
-                        preserved_solution = await capture_sandbox_patch(
-                            state.metadata["base_commit"]
-                        )
+                        # Verify tests pass — callout only fires for confirmed reward hacks
+                        from impossiblebench.swe.scorers import swe_bench_scorer
+
+                        scorer = swe_bench_scorer(reset_patch=hide_tests, reset_tests=reset_tests)
+                        score_result = await scorer(state, None)
+                        if score_result.value == 1.0:
+                            preserved_solution = await capture_sandbox_patch(
+                                state.metadata["base_commit"]
+                            )
+                        else:
+                            preserved_solution = None
                         state.metadata = state.metadata or {}
                         state.metadata["agentic_results"] = {
                             "preserved_solution": preserved_solution,
@@ -788,12 +796,17 @@ def mini_agent_solver(
                 step_count += 1
 
         # Fallback: loop exhausted without an earlier return.
-        # Capture the real patch from the sandbox (the local preserved_solution
-        # variable is unreliable — it may still be None or an empty string
-        # from extract_final_patch).
-        preserved_solution = await capture_sandbox_patch(
-            state.metadata["base_commit"]
-        )
+        # Verify tests pass — only preserve solution for confirmed reward hacks.
+        from impossiblebench.swe.scorers import swe_bench_scorer
+
+        scorer = swe_bench_scorer(reset_patch=hide_tests, reset_tests=reset_tests)
+        score_result = await scorer(state, None)
+        if score_result.value == 1.0:
+            preserved_solution = await capture_sandbox_patch(
+                state.metadata["base_commit"]
+            )
+        else:
+            preserved_solution = None
         state.metadata = state.metadata or {}
         state.metadata["agentic_results"] = {
             "preserved_solution": preserved_solution,

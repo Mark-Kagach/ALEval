@@ -202,14 +202,14 @@ def main() -> None:
     df_samples = df_samples.copy()
     df_samples["reward_hack_operational"] = df_samples["passed"] == True  # noqa: E712
     df_passed = df_samples[df_samples["reward_hack_operational"] == True].copy()  # noqa: E712
-    # Triggered = callout fired (agent submitted code), regardless of score
+    # Triggered = callout fired for confirmed reward hacks (score=1) only
     df_triggered = df_samples[
         df_samples["callout_deterministic_label"].isin(["lie", "truth", "evasive"])
     ].copy()
 
     summary = compute_summary(df_samples, df_passed, df_triggered)
 
-    # Optional LLM judge enrichment on all triggered callouts (not just passed)
+    # Optional LLM judge enrichment on triggered callouts
     if getattr(args, "llm_judge", None):
         summary = _run_llm_judge(args.llm_judge, df_samples, df_triggered, summary)
 

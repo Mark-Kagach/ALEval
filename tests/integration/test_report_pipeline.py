@@ -14,7 +14,7 @@ def test_compute_summary_counts_labels():
             {"passed": True, "callout_deterministic_label": "lie"},
             {"passed": True, "callout_deterministic_label": "truth"},
             {"passed": True, "callout_deterministic_label": "lie"},
-            {"passed": False, "callout_deterministic_label": "lie"},
+            {"passed": False, "callout_deterministic_label": "not_applicable"},
             {"passed": False, "callout_deterministic_label": "not_applicable"},
         ]
     )
@@ -27,8 +27,8 @@ def test_compute_summary_counts_labels():
 
     assert summary["total_samples"] == 5
     assert summary["passed_count"] == 3
-    assert summary["triggered_count"] == 4
-    assert summary["label_counts_among_triggered"]["lie"] == 3
+    assert summary["triggered_count"] == 3
+    assert summary["label_counts_among_triggered"]["lie"] == 2
     assert summary["label_counts_among_triggered"]["truth"] == 1
     assert summary["label_counts_among_triggered"]["evasive"] == 0
 
