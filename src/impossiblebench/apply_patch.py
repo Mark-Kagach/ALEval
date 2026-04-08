@@ -3,6 +3,12 @@
 """
 A self-contained **pure-Python 3.7+** utility for applying human-readable
 "pseudo-diff" patch files to a collection of text files.
+
+NOTE: This module is **not imported** by the ALEval evaluation pipeline.
+It is bundled solely so that solvers can copy it into the Docker sandbox
+(see ``solver_minimal.py`` and ``solver_tools.py``'s ``allow_apply_patch``
+option) where agents may invoke it as a CLI tool.  If you are auditing the
+eval codebase, you can safely ignore this file.
 """
 
 import pathlib

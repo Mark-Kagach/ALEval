@@ -238,21 +238,6 @@ def parse_eval_file(file_path: str) -> list[EvalResult]:
         # Parse task display name for detailed metadata
         task_metadata = parse_task_display_name(task_display_name)
 
-        # Get score information
-        if eval_log.results and eval_log.results.scores:
-            score_info = eval_log.results.scores[0]
-            metrics = score_info.metrics
-
-            # Extract overall pass rate
-            if "mean" in metrics:
-                pass_rate = metrics["mean"].value  # noqa: F841
-            elif "accuracy" in metrics:
-                pass_rate = metrics["accuracy"].value  # noqa: F841
-
-            scored = score_info.scored_samples if hasattr(score_info, "scored_samples") else 1  # noqa: F841
-        else:
-            pass
-
         # Now read full log to get individual sample results
         try:
             eval_log_full = read_eval_log(file_path, header_only=False)
@@ -301,10 +286,9 @@ def parse_eval_file(file_path: str) -> list[EvalResult]:
                     for e in sample.events:
                         try:
                             scores_got.append(score_to_float(e.score.value))
-                        except Exception:
+                        except (AttributeError, TypeError, ValueError, KeyError):
+                            # Events without a score attribute (tool calls, etc.)
                             continue
-                    # if len(scores_got) > 1:
-                    #     print(f'{scores_got=} {sample_score=} {task_metadata.get("agent_type")=}')
                 else:
                     # invalid score
                     continue

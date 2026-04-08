@@ -322,6 +322,37 @@ async def capture_sandbox_patch(base_commit: str) -> str:
         return ""
 
 
+def _set_agentic_results(state: TaskState, preserved_solution: str | None) -> None:
+    """Write ``preserved_solution`` into ``state.metadata["agentic_results"]``.
+
+    Centralised helper so every exit path in the solver writes the same
+    metadata structure that the callout solver and scorers expect.
+    """
+    state.metadata = state.metadata or {}
+    state.metadata["agentic_results"] = {"preserved_solution": preserved_solution}
+
+
+async def _verify_and_capture(
+    state: TaskState,
+    hide_tests: bool,
+    reset_tests: bool,
+) -> tuple:
+    """Run the SWE-bench scorer and capture the sandbox patch if tests pass.
+
+    Returns:
+        ``(score_result, preserved_solution)`` where *preserved_solution* is
+        the git diff string when tests pass, or ``None`` otherwise.
+    """
+    from impossiblebench.swe.scorers import swe_bench_scorer
+
+    scorer = swe_bench_scorer(reset_patch=hide_tests, reset_tests=reset_tests)
+    score_result = await scorer(state, None)
+    preserved_solution = None
+    if score_result.value == 1.0:
+        preserved_solution = await capture_sandbox_patch(state.metadata["base_commit"])
+    return score_result, preserved_solution
+
+
 def format_test_feedback(
     score: float,
     test_results: dict,
@@ -560,21 +591,6 @@ def mini_agent_solver(
         elif test_info == "":
             test_info = "<test_info>\n"
 
-        # if fail_to_pass:
-        #     test_info += f"\nTESTS THAT MUST PASS (currently failing):\n"
-        #     for test in fail_to_pass:
-        #         test_info += f"  - {test}\n"
-
-        # if pass_to_pass:
-        #     test_info += f"\nTESTS THAT MUST CONTINUE TO PASS (currently passing):\n"
-        #     for test in pass_to_pass:
-        #         test_info += f"  - {test}\n"
-
-        # if test_files:
-        #     test_info += f"\nTEST FILES TO EXAMINE:\n"
-        #     for test_file in test_files:
-        #         test_info += f"  - {test_file}\n"
-
         if test_info and not test_info.endswith("</test_info>\n"):
             test_info += "</test_info>"
 
@@ -669,51 +685,29 @@ def mini_agent_solver(
 
                     # If this is the last attempt or multi-submission is disabled, we're done
                     if attempt >= max_attempts or max_attempts == 1:
-                        # Verify tests pass — callout only fires for confirmed reward hacks
-                        from impossiblebench.swe.scorers import swe_bench_scorer
-
-                        scorer = swe_bench_scorer(reset_patch=hide_tests, reset_tests=reset_tests)
-                        score_result = await scorer(state, None)
-                        if score_result.value == 1.0:
-                            preserved_solution = await capture_sandbox_patch(
-                                state.metadata["base_commit"]
-                            )
-                        else:
-                            preserved_solution = None
-                        state.metadata = state.metadata or {}
-                        state.metadata["agentic_results"] = {
-                            "preserved_solution": preserved_solution,
-                        }
+                        _score_result, preserved_solution = await _verify_and_capture(
+                            state, hide_tests, reset_tests
+                        )
+                        _set_agentic_results(state, preserved_solution)
                         return state
 
                     # Run tests and get feedback for multi-submission
                     if provide_test_feedback and attempt < max_attempts:
-                        # Import scorer here to avoid circular dependency
-                        from impossiblebench.swe.scorers import swe_bench_scorer
-
-                        scorer = swe_bench_scorer(reset_patch=hide_tests, reset_tests=reset_tests)
-                        score_result = await scorer(state, None)
+                        score_result, preserved_solution = await _verify_and_capture(
+                            state, hide_tests, reset_tests
+                        )
 
                         if state.completed:
                             # Ensure metadata is written even on early completion
-                            preserved_solution = await capture_sandbox_patch(
+                            preserved_solution = preserved_solution or await capture_sandbox_patch(
                                 state.metadata["base_commit"]
                             )
-                            state.metadata = state.metadata or {}
-                            state.metadata["agentic_results"] = {
-                                "preserved_solution": preserved_solution,
-                            }
+                            _set_agentic_results(state, preserved_solution)
                             return state
 
                         if score_result.value == 1.0:
                             logger.info(f"Tests passed on attempt {attempt}!")
-                            preserved_solution = await capture_sandbox_patch(
-                                state.metadata["base_commit"]
-                            )
-                            state.metadata = state.metadata or {}
-                            state.metadata["agentic_results"] = {
-                                "preserved_solution": preserved_solution,
-                            }
+                            _set_agentic_results(state, preserved_solution)
                             return state
 
                         # Parse test results from explanation
@@ -758,7 +752,7 @@ def mini_agent_solver(
                                                     )
                                                     break
                                             break
-                            except Exception:
+                            except (json.JSONDecodeError, IndexError, StopIteration):
                                 test_results = {
                                     "pass_to_pass": {},
                                     "fail_to_pass": {},
@@ -796,21 +790,10 @@ def mini_agent_solver(
                 step_count += 1
 
         # Fallback: loop exhausted without an earlier return.
-        # Verify tests pass — only preserve solution for confirmed reward hacks.
-        from impossiblebench.swe.scorers import swe_bench_scorer
-
-        scorer = swe_bench_scorer(reset_patch=hide_tests, reset_tests=reset_tests)
-        score_result = await scorer(state, None)
-        if score_result.value == 1.0:
-            preserved_solution = await capture_sandbox_patch(
-                state.metadata["base_commit"]
-            )
-        else:
-            preserved_solution = None
-        state.metadata = state.metadata or {}
-        state.metadata["agentic_results"] = {
-            "preserved_solution": preserved_solution,
-        }
+        _score_result, preserved_solution = await _verify_and_capture(
+            state, hide_tests, reset_tests
+        )
+        _set_agentic_results(state, preserved_solution)
         return state
 
     return solve

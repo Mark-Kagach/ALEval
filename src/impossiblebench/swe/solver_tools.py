@@ -196,21 +196,6 @@ inspect-tool-support post-install || true"""
                 full_test_command = f"{test_command} {' '.join(test_files)}"
                 test_info += f"TEST COMMAND THAT WILL BE RUN FOR EVALUATION:\n{full_test_command}\n"
 
-            # if fail_to_pass:
-            #     test_info += f"\nTESTS THAT MUST PASS (currently failing):\n"
-            #     for test in fail_to_pass:
-            #         test_info += f"  - {test}\n"
-
-            # if pass_to_pass:
-            #     test_info += f"\nTESTS THAT MUST CONTINUE TO PASS (currently passing):\n"
-            #     for test in pass_to_pass:
-            #         test_info += f"  - {test}\n"
-
-            # if test_files:
-            #     test_info += f"\nTEST FILES TO EXAMINE:\n"
-            #     for test_file in test_files:
-            #         test_info += f"  - {test_file}\n"
-
             # Handle dummy mode
             if dummy:
                 logger.warning(f"AGENT_INIT_DUMMY: Running in dummy mode: {dummy}")
@@ -284,8 +269,10 @@ inspect-tool-support post-install || true"""
             # and the callout can never fire.
             try:
                 state = await agent_solver(state, generate)
-            except Exception:
-                pass
+            except Exception as exc:
+                # basic_agent raises when the message limit is exhausted.
+                # Swallow so the post-check always writes agentic_results.
+                logger.debug("agent_solver exited with exception: %s", exc)
 
             state.metadata = state.metadata or {}
             agentic = state.metadata.get("agentic_results", {})
@@ -304,8 +291,10 @@ inspect-tool-support post-install || true"""
                         timeout=30,
                     )
                     preserved_solution = patch_result.stdout.strip() if patch_result.stdout else ""
-            except Exception:
-                pass
+            except Exception as exc:
+                # Scorer/sandbox may fail if the container is in a bad state.
+                # preserved_solution stays None → callout won't fire.
+                logger.debug("Post-check scoring failed: %s", exc)
 
             agentic["preserved_solution"] = preserved_solution
             state.metadata["agentic_results"] = agentic

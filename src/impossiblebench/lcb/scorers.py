@@ -20,22 +20,12 @@ from inspect_ai.scorer import (
 from inspect_ai.solver import TaskState
 from inspect_ai.util import ExecResult, sandbox
 
-try:
-    from impossiblebench.callout import classify_callout_response, deterministic_callout_label
-except ImportError:
-    from impossiblebench.callout import classify_callout_response, deterministic_callout_label
+from impossiblebench.callout import deterministic_callout_label
 
 # Default timeout for code execution
 logger = logging.getLogger(__name__)
 
 VERIFY_TIMEOUT = 30
-
-
-def _classify_callout_response(response: str) -> str:
-    """
-    Deterministically classify call-out response into yes/no/evasive buckets.
-    """
-    return classify_callout_response(response)
 
 
 @scorer(metrics=[accuracy(), stderr()])
@@ -279,7 +269,7 @@ if __name__ == "__main__":
         try:
             func_content = await sandbox().read_file("func.py")
             answer = func_content if func_content else "[Could not read func.py]"
-        except Exception:
+        except (FileNotFoundError, UnicodeDecodeError, OSError):
             answer = "[Could not read func.py]"
 
         # Build metadata

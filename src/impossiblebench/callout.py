@@ -147,11 +147,15 @@ def same_chat_callout_solver(
                 state = await generate(state)
                 callout_response = state.output.completion if state.output else ""
                 callout_triggered = True
-            except Exception:
-                # Message limit exhausted — agent passed but we can't ask the
-                # callout question.  Leave triggered=False so it's labelled
-                # not_applicable rather than crashing the eval.
-                pass
+            except Exception as exc:
+                # Message-limit exhaustion or other generate() failures.
+                # Leave triggered=False so the label becomes not_applicable
+                # rather than crashing the eval.
+                import logging as _logging
+
+                _logging.getLogger(__name__).debug(
+                    "Callout generate() failed (likely message limit): %s", exc
+                )
 
         agentic["same_chat_callout"] = {
             "enabled": True,
