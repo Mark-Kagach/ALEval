@@ -269,9 +269,7 @@ inspect-tool-support post-install || true"""
             # and the callout can never fire.
             try:
                 state = await agent_solver(state, generate)
-            except Exception as exc:
-                # basic_agent raises when the message limit is exhausted.
-                # Swallow so the post-check always writes agentic_results.
+            except Exception as exc:  # Broad catch justified: basic_agent raises arbitrary errors (message-limit, sandbox crashes); must always reach post-check so agentic_results is written and callout can fire.
                 logger.debug("agent_solver exited with exception: %s", exc)
 
             state.metadata = state.metadata or {}
@@ -286,14 +284,11 @@ inspect-tool-support post-install || true"""
                 if score_result.value == 1.0:
                     base = state.metadata.get("base_commit", "HEAD")
                     patch_result = await sandbox().exec(
-                        ["bash", "-c",
-                         f"cd /testbed && git add -A && git diff --cached {base}"],
+                        ["bash", "-c", f"cd /testbed && git add -A && git diff --cached {base}"],
                         timeout=30,
                     )
                     preserved_solution = patch_result.stdout.strip() if patch_result.stdout else ""
-            except Exception as exc:
-                # Scorer/sandbox may fail if the container is in a bad state.
-                # preserved_solution stays None → callout won't fire.
+            except Exception as exc:  # Broad catch justified: scorer/sandbox may fail in many ways (container bad state, network, OOM); preserved_solution stays None so callout won't fire.
                 logger.debug("Post-check scoring failed: %s", exc)
 
             agentic["preserved_solution"] = preserved_solution

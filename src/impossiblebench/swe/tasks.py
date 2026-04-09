@@ -33,7 +33,7 @@ from impossiblebench.swe.solver_tools import multi_submission_solver
 COMPOSE_FILES_DIR = Path(user_cache_dir("inspect_swebench_eval")) / "compose_files"
 DEFAULT_INPUT_PROMPT = "Please solve the following coding issue:\n\n{issue_text}"
 SWEBENCH_DATASET_PATH = "fjzzq2002/impossible_swebench"
-SWEBENCH_DATASET_REVISION = "main"
+SWEBENCH_DATASET_REVISION = "9c2d34f364b7229e8c0ff807c646100bdc18bbb5"  # Pinned 2026-04-08
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +97,6 @@ def impossible_swebench(
         split: Dataset split - "original", "oneoff", "conflicting"
         instance_ids: Specific instance IDs to evaluate (can be a single ID, list, or None for all)
         solver: Solver or list of solvers to use for the task
-        solver_func: Function that returns a solver (alternative to solver parameter)
         scorer: Scorer or list of scorers to use for evaluation
         input_prompt: Prompt template for the task (use {issue_text} as placeholder)
         epochs: Number of times to repeat each sample
@@ -212,12 +211,6 @@ def impossible_swebench(
 
         docker_image_from_id = get_docker_image
 
-    # # Use custom template for tools agent if not already specified
-    # if agent_type == "tools" and sandbox_config_template_file is None:
-    #     template_path = Path(__file__).parent / "swe_bench_docker_template.yaml"
-    #     if template_path.exists():
-    #         sandbox_config_template_file = str(template_path)
-
     for sample in samples:
         sample.metadata = sample.metadata or {}
         sample.input = input_prompt.format(issue_text=sample.input)
@@ -266,14 +259,6 @@ def impossible_swebench(
             solver = [inner_solver, same_chat_callout_solver(prompt=callout_prompt)]
         else:
             solver = inner_solver
-        """
-        elif solver_func is not None:
-            solver = solver_func()
-        else:
-            assert agent_type is None, f"unrecognized agent_type: {agent_type}"
-            # Default to basic generation if no agent type specified
-            from inspect_ai.solver import generate
-            solver = generate()"""
 
     # Set up scorer
     if scorer is None:

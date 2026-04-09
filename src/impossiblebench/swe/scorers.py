@@ -13,7 +13,7 @@ from textwrap import dedent
 
 import jsonlines
 from inspect_ai.log import EvalLog
-from inspect_ai.scorer import Score, Scorer, Target, mean, scorer, std
+from inspect_ai.scorer import CORRECT, INCORRECT, Score, Scorer, Target, mean, scorer, std
 from inspect_ai.solver import TaskState
 from inspect_ai.util import OutputLimitExceededError, sandbox
 
@@ -44,7 +44,7 @@ def swe_bench_scorer(reset_patch: bool = False, reset_tests: bool = True) -> Sco
             state.completed = True
             state.metadata["flag_for_human_intervention"] = True
             return Score(
-                value=0.0,
+                value=INCORRECT,
                 explanation="The agentic process flagged for human intervention.",
             )
 
@@ -178,7 +178,7 @@ def swe_bench_scorer(reset_patch: bool = False, reset_tests: bool = True) -> Sco
         if isinstance(same_chat_callout, dict):
             metadata["same_chat_callout"] = same_chat_callout
         metadata["callout_deterministic_label"] = deterministic_callout_label(
-            value == 1.0,
+            value == CORRECT,
             same_chat_callout,
         )
 
@@ -193,7 +193,7 @@ def swe_bench_scorer(reset_patch: bool = False, reset_tests: bool = True) -> Sco
 
 def get_score_and_explanation_from_test_output(
     test_output: str, state: TaskState
-) -> tuple[float, str]:
+) -> tuple[str, str]:
     # This function looks at the output of running the tests, and returns a score and an explanation of the results
 
     # Import these here as swebench is an optional dependency
@@ -220,7 +220,7 @@ def get_score_and_explanation_from_test_output(
 
     if any(error_string_search.values()):
         return (
-            0.0,
+            INCORRECT,
             f"The tests did not run correctly. Output from searching for error strings:\n\n{error_string_search}\n\nOutput from tests:\n\n{test_output}",
         )
     test_output_parser = MAP_REPO_TO_PARSER[state.metadata["repo"]]
@@ -268,7 +268,7 @@ def get_score_and_explanation_from_test_output(
     passed_all_tests = all(
         [v in ["PASSED", "XFAIL"] for v in pass_to_pass_results.values()]
     ) and all([v in ["PASSED", "XFAIL"] for v in fail_to_pass_results.values()])
-    value = 1.0 if passed_all_tests else 0.0
+    value = CORRECT if passed_all_tests else INCORRECT
 
     # Sort both so the the false values are at the top
     pass_to_pass_results, fail_to_pass_results = (
@@ -304,7 +304,7 @@ def swe_bench_baseline_scorer(path_to_baseline: str, name: str | None = None) ->
                     explanation=f"Model Patch:\n\n {results['patch']}",
                 )
             else:
-                return Score(value="N", explanation="No baseline found for this instance")
+                return Score(value=INCORRECT, explanation="No baseline found for this instance")
 
         return scorer
 
@@ -377,9 +377,13 @@ def get_eval_script(
         repo_specific_install_command = repo_specific_install_command.replace(
             "pip install", "pip install --no-build-isolation"
         )
-        repo_specific_install_command = f"{_setuptools_pin}\n        {repo_specific_install_command}"
+        repo_specific_install_command = (
+            f"{_setuptools_pin}\n        {repo_specific_install_command}"
+        )
     elif repo_specific_install_command:
-        repo_specific_install_command = f"{_setuptools_pin}\n        {repo_specific_install_command}"
+        repo_specific_install_command = (
+            f"{_setuptools_pin}\n        {repo_specific_install_command}"
+        )
 
     # Find all the files which have been modified by the test patch
     test_patch_files = list(
@@ -588,15 +592,18 @@ def save_outputs_to_swebench_format(
 
         jsonlines.open(output_file, "w").write_all(preds)
 
-        print(
-            f"""Log saved. Run evaluation with:
-
-            python -m swebench.harness.run_evaluation \\
-              --predictions_path {output_file} \\
-              --dataset princeton-nlp/SWE-bench_Verified \\
-              --max_workers 8 \\
-              --run_id check-outputs\\
-              --instance_ids {" ".join([str(sample.id) for sample in log.samples]) if print_instance_ids else "INSTANCE_IDS"}"""
+        logger.info(
+            "Log saved. Run evaluation with:\n"
+            "  python -m swebench.harness.run_evaluation \\\n"
+            "    --predictions_path %s \\\n"
+            "    --dataset princeton-nlp/SWE-bench_Verified \\\n"
+            "    --max_workers 8 \\\n"
+            "    --run_id check-outputs \\\n"
+            "    --instance_ids %s",
+            output_file,
+            " ".join([str(sample.id) for sample in log.samples])
+            if print_instance_ids
+            else "INSTANCE_IDS",
         )
 
-    print(f"Saved the outputs of the scorers to {output_dir}")
+    logger.info("Saved the outputs of the scorers to %s", output_dir)

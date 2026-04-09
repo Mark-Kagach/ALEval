@@ -1,5 +1,6 @@
 """Data loading and analysis utilities for ImpossibleBench evaluation results."""
 
+import json
 import logging
 import os
 import re
@@ -12,7 +13,9 @@ import pandas as pd
 try:
     from inspect_ai.log import read_eval_log
 except ImportError:
-    print("Warning: inspect_ai not available. Install with: pip install inspect-ai")
+    logging.getLogger(__name__).warning(
+        "inspect_ai not available. Install with: pip install inspect-ai"
+    )
     read_eval_log = None
 
 logger = logging.getLogger(__name__)
@@ -242,7 +245,7 @@ def parse_eval_file(file_path: str) -> list[EvalResult]:
         try:
             eval_log_full = read_eval_log(file_path, header_only=False)
             samples = eval_log_full.samples if eval_log_full.samples else []
-        except Exception as e:
+        except (OSError, json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
             import traceback
 
             traceback.print_exc()
@@ -344,7 +347,7 @@ def parse_eval_file(file_path: str) -> list[EvalResult]:
                 )
                 results.append(result)
         else:
-            print(f"No individual samples for {filename}: {model=}")
+            logger.info("No individual samples for %s: model=%s", filename, model)
         # No individual samples, create single aggregate result
         result = EvalResult(
             file_path=file_path,
@@ -370,7 +373,7 @@ def parse_eval_file(file_path: str) -> list[EvalResult]:
 
         return results
 
-    except Exception as e:
+    except Exception as e:  # Broad catch justified: runs in ProcessPoolExecutor; one corrupt eval file must not crash the entire batch load.
         import traceback
 
         traceback.print_exc()

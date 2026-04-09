@@ -3,20 +3,9 @@
 from __future__ import annotations
 
 import os
-import sys
 from dataclasses import dataclass
-from pathlib import Path
 
 import pytest
-
-ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "src"
-TESTS_DIR = Path(__file__).resolve().parent
-
-if str(SRC) not in sys.path:
-    sys.path.insert(0, str(SRC))
-if str(TESTS_DIR) not in sys.path:
-    sys.path.insert(0, str(TESTS_DIR))
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -37,14 +26,24 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         "off",
     )
 
+    run_docker = os.environ.get("RUN_DOCKER_TESTS", "").lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
     skip_slow = pytest.mark.skip(reason="need --runslow option or RUN_SLOW_TESTS=1")
     skip_dataset = pytest.mark.skip(reason="dataset download tests disabled")
+    skip_docker = pytest.mark.skip(reason="need RUN_DOCKER_TESTS=1 to run Docker tests")
 
     for item in items:
         if "slow" in item.keywords and not run_slow:
             item.add_marker(skip_slow)
         if "dataset_download" in item.keywords and not run_dataset:
             item.add_marker(skip_dataset)
+        if "docker" in item.keywords and not run_docker:
+            item.add_marker(skip_docker)
 
 
 @dataclass

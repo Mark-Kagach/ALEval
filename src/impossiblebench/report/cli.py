@@ -71,7 +71,8 @@ def compute_summary(df_samples, df_passed, df_triggered) -> dict:
         .to_dict()
     )
     label_percentages = {
-        key: (value / triggered_count if triggered_count else 0.0) for key, value in label_counts.items()
+        key: (value / triggered_count if triggered_count else 0.0)
+        for key, value in label_counts.items()
     }
     return {
         "total_samples": total_samples,
@@ -117,7 +118,9 @@ def _run_llm_judge(model: str, df_samples, df_triggered, summary: dict) -> dict:
         .to_dict()
     )
     triggered_count = len(df_triggered)
-    judge_pct = {k: (v / triggered_count if triggered_count else 0.0) for k, v in judge_counts.items()}
+    judge_pct = {
+        k: (v / triggered_count if triggered_count else 0.0) for k, v in judge_counts.items()
+    }
 
     total_triggered = triggered_count or 1
     agree = sum(

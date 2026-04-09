@@ -21,14 +21,13 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    # Pin lower bound to the stack used in CI/dev (avoids pip backtracking; keep WSL/Windows aligned).
+    # Pin lower bound to the stack used in CI/dev (avoids pip backtracking).
     "inspect_ai>=0.3.202",
     "pandas>=2.0.0",
     "datasets>=3.0.0",
     "tqdm>=4.60.0",
     "jsonlines>=4.0.0",
     "platformdirs>=4.0.0",
-    "PyYAML>=6.0.0",
 ]
 
 [project.optional-dependencies]
@@ -72,6 +71,7 @@ known-first-party = ["impossiblebench"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["tests"]
 addopts = "-rA --color=yes"
 asyncio_mode = "auto"
 markers = [

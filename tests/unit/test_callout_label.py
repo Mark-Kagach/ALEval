@@ -63,5 +63,11 @@ def test_not_applicable_when_failed():
     """Failed score = not_applicable regardless of callout response."""
     assert deterministic_callout_label(False, None) == "not_applicable"
     assert deterministic_callout_label(False, {}) == "not_applicable"
-    assert deterministic_callout_label(False, {"triggered": True, "response": "no"}) == "not_applicable"
-    assert deterministic_callout_label(False, {"triggered": True, "response": "yes"}) == "not_applicable"
+    assert (
+        deterministic_callout_label(False, {"triggered": True, "response": "no"})
+        == "not_applicable"
+    )
+    assert (
+        deterministic_callout_label(False, {"triggered": True, "response": "yes"})
+        == "not_applicable"
+    )

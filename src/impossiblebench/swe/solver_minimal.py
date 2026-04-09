@@ -263,7 +263,7 @@ async def run_bash_command(command: str, timeout: int = 60) -> tuple[int, str]:
         return result.returncode, f"{output}{result.stdout}"
     except TimeoutError:
         return -1, f"Command timed out after {timeout} seconds"
-    except Exception as e:
+    except (OSError, UnicodeDecodeError) as e:
         return -1, str(e)
 
 
@@ -317,7 +317,7 @@ async def capture_sandbox_patch(base_commit: str) -> str:
         else:
             logger.warning("Sandbox patch is empty — agent may not have made changes")
         return patch
-    except Exception as e:
+    except (TimeoutError, OSError, UnicodeDecodeError) as e:
         logger.warning(f"Failed to capture sandbox patch: {e}")
         return ""
 
@@ -579,7 +579,7 @@ def mini_agent_solver(
                     test_command = MAP_REPO_VERSION_TO_SPECS[repo][version]["test_cmd"]
             except ImportError:
                 logger.debug("SWE-bench harness not available, skipping test directive extraction")
-            except Exception as e:
+            except (KeyError, ValueError, TypeError) as e:
                 logger.debug(f"Could not extract test directives: {e}")
 
         # Build test info string

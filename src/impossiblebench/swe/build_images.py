@@ -26,6 +26,7 @@ def build_images(
         force_arch (str, optional): Optionally force the docker images to be pulled/built for a specific architecture. Defaults to "".
     """
     from docker.client import DockerClient  # type: ignore
+    from docker.errors import DockerException  # type: ignore
     from swebench.harness.docker_build import build_instance_images  # type: ignore
 
     # NOTE: The changes from swebench 2.1.8 to 3.0.0 are not currently documented, so we use try/except
@@ -90,7 +91,7 @@ def build_images(
                 docker_client.api.tag(image_name, image_base_name, "latest")
                 successfully_pulled.append(instance_id)
                 logger.info(f"Successfully pulled {image_name}")
-            except Exception as e:
+            except (DockerException, OSError) as e:
                 logger.warning(f"Failed to pull {image_name}: {e}")
 
         logger.info(f"Pulled {len(successfully_pulled)} images from Docker Hub")
@@ -130,7 +131,7 @@ def build_images(
         for s in samples_hf
         if id_to_docker_image[s["instance_id"]] not in available_docker_images
     ]
-    print(f"{bad_instances=}")
+    logger.warning("Bad instances: %s", bad_instances)
     assert len(missing_images) == 0, f"Not all images were built: {missing_images}"
 
     return id_to_docker_image

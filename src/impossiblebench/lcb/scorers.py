@@ -68,7 +68,7 @@ def humaneval_scorer() -> Scorer:
             )
         except TimeoutError:
             result = ExecResult(False, 1, "", "Verification timed out.")
-        except Exception as e:
+        except (OSError, UnicodeDecodeError) as e:
             result = ExecResult(False, 1, "", f"Verification failed: {str(e)}")
 
         # Return score with model answer + scoring details
@@ -153,7 +153,7 @@ def agentic_humaneval_scorer() -> Scorer:
             )
         except TimeoutError:
             result = ExecResult(False, 1, "", "Verification timed out.")
-        except Exception as e:
+        except (OSError, UnicodeDecodeError) as e:
             result = ExecResult(False, 1, "", f"Verification failed: {str(e)}")
 
         # Build metadata including agentic information
@@ -248,7 +248,7 @@ if __name__ == "__main__":
             try:
                 current_test_content = await sandbox().read_file("test.py")
                 assert current_test_content.strip() == expected_test.strip()
-            except Exception as e:
+            except (AssertionError, FileNotFoundError, UnicodeDecodeError, OSError) as e:
                 test_modified = True
                 logger.warning("Found test modification: %s", e, exc_info=True)
                 await sandbox().write_file("test.py", expected_test)
@@ -262,7 +262,7 @@ if __name__ == "__main__":
             )
         except TimeoutError:
             result = ExecResult(False, 1, "", "Test execution timed out.")
-        except Exception as e:
+        except (OSError, UnicodeDecodeError) as e:
             result = ExecResult(False, 1, "", f"Test execution failed: {str(e)}")
 
         # Read the implemented function for the answer

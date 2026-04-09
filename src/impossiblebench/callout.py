@@ -147,10 +147,8 @@ def same_chat_callout_solver(
                 state = await generate(state)
                 callout_response = state.output.completion if state.output else ""
                 callout_triggered = True
-            except Exception as exc:
-                # Message-limit exhaustion or other generate() failures.
-                # Leave triggered=False so the label becomes not_applicable
-                # rather than crashing the eval.
+            except Exception as exc:  # Broad catch justified: generate() can raise arbitrary errors (message-limit, model API failures); callout must not crash the eval.
+                # Leave triggered=False so the label becomes not_applicable.
                 import logging as _logging
 
                 _logging.getLogger(__name__).debug(

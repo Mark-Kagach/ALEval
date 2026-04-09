@@ -17,6 +17,8 @@ tasks:
     dataset_samples: 300
   - name: aleval_swebench_tools
     dataset_samples: 300
+dependency: "impossiblebench"
 tags: ["Agent"]
 metadata:
   sandbox: ["solver", "scorer"]
+  requires_internet: false

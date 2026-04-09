@@ -149,7 +149,7 @@ def agentic_humaneval_solver(
                             "Tests failed on attempt %d: %.200s...", attempt + 1, last_error
                         )
 
-                except Exception as e:
+                except (TimeoutError, OSError, UnicodeDecodeError) as e:
                     last_error = (str(type(e)) + " " + str(e)).strip()
                     attempt_result = {
                         "attempt": attempt + 1,
