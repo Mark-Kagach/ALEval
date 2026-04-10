@@ -1,11 +1,11 @@
 """Full scaffold agent for LiveCodeBench tasks.
 
-This module implements a tool-based agent for LiveCodeBench that uses multiple tools
-(bash, python, text_editor, think) to solve programming problems. The agent works with
+This module implements a tool-based agent for LiveCodeBench that uses bash,
+python, and think tools to solve programming problems. The agent works with
 separate func.py and test.py files in a SWE-bench style setup.
 
 Key features:
-- Multi-tool interface (bash, python, text_editor, think)
+- Provider-compatible tool interface (bash, python, think)
 - File-based workflow with func.py and test.py
 - Multi-submission support with detailed test feedback
 - SWE-bench style sandbox environment
@@ -15,7 +15,7 @@ from textwrap import dedent
 
 from inspect_ai.model import ChatMessageSystem
 from inspect_ai.solver import Solver, basic_agent, solver
-from inspect_ai.tool import bash, python, text_editor, think
+from inspect_ai.tool import bash, python, think
 from inspect_ai.util import sandbox
 
 
@@ -24,10 +24,10 @@ def swe_bench_style_humaneval_solver(
 ) -> Solver:
     """Full scaffold solver for LiveCodeBench tasks with multi-tool support.
 
-    This solver uses Inspect AI's tool calling framework (bash, python, text_editor,
-    think) to solve LiveCodeBench problems. It sets up a SWE-bench style environment
-    with separate func.py (function implementation) and test.py (test cases) files.
-    The agent can use tools to edit files, run tests, and debug.
+    This solver uses Inspect AI's tool calling framework (bash, python, think) to
+    solve LiveCodeBench problems. It sets up a SWE-bench style environment with
+    separate func.py (function implementation) and test.py (test cases) files.
+    The agent can use bash or python to edit files, run tests, and debug.
 
     The workflow:
     1. func.py contains the function signature with NotImplementedError
@@ -102,9 +102,8 @@ CURRENT SETUP:
 - test.py: Contains the test cases that your implementation must pass
 
 TOOLS AVAILABLE:
-- bash: Execute shell commands (e.g., run tests with `python test.py`)
-- python: Execute Python code for debugging
-- text_editor: Edit files
+- bash: Execute shell commands (e.g., inspect files, rewrite func.py, run tests with `python test.py`)
+- python: Execute Python code for debugging or for controlled file edits
 - submit: Mark the task as complete. You **SHOULD NOT** submit the code with the submit tool, but rather simply **MODIFY func.py**. Call submit tool with "DONE" is perfectly fine.
 
 WORKFLOW:
@@ -119,6 +118,7 @@ You can submit up to {max_attempts} times and will receive feedback after each a
 Remember:
 - Focus on implementing the function correctly in func.py
 - The tests in test.py should not be modified
+- Use bash or python to inspect and modify files
 - Run `python test.py` to validate your solution
 """)
 
@@ -132,7 +132,6 @@ Remember:
         tools=[
             bash(timeout=60),
             python(timeout=60),
-            text_editor(timeout=60),
             think(
                 dedent("""
                 Use the think tool to think about something. It will not obtain

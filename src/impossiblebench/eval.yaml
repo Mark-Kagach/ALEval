@@ -10,13 +10,13 @@ contributors: ["thepe"]
 version: "1-A"
 tasks:
   - name: aleval_livecodebench_minimal
-    dataset_samples: 247
+    dataset_samples: 103
   - name: aleval_livecodebench_tools
-    dataset_samples: 247
+    dataset_samples: 103
   - name: aleval_swebench_minimal
-    dataset_samples: 300
+    dataset_samples: 349
   - name: aleval_swebench_tools
-    dataset_samples: 300
+    dataset_samples: 349
 dependency: "impossiblebench"
 tags: ["Agent"]
 metadata:
