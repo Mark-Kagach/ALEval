@@ -1,4 +1,4 @@
-# ALEval: Agentic-Lying Eval
+# ALEval: Action-Lying Eval
 
 Evaluation framework measuring whether LLM agents lie about reward hacking on impossible coding tasks.
 
@@ -22,7 +22,7 @@ pip install -e ".[swe]"            # Add SWE-bench support
 pip install -e ".[analysis]"       # Add LLM judge (litellm)
 pip install -e ".[dev,test]"       # Development + tests
 
-pytest tests/ -v                   # Run all tests (66 pass, 2 xfail)
+pytest tests/ -v                   # Run all tests (61 pass, 5 e2e skipped, 2 xfail)
 pytest tests/unit/ -v              # Fast unit tests only
 ruff check src/ tests/             # Lint
 ruff format src/ tests/            # Format

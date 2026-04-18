@@ -1,10 +1,18 @@
 .venv/
+.venv-wsl/
 venv/
 env/
 .claude/
+.env
 
 logs/
-reports/
+# Ignore everything under reports/ except the archived report bundles that
+# back the numbers quoted in README/docs. Keeping the per-panel bundles in
+# git lets contributors browse summary.md / results_table.md / judged_samples
+# without rerunning the panels. Raw .eval logs stay out of git (too big).
+reports/*
+!reports/aleval_lcb_min_frontier_models/
+!reports/aleval_lcb_min_legacy_models/
 
 __pycache__/
 **/__pycache__/
