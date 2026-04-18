@@ -178,7 +178,7 @@ def swe_bench_scorer(reset_patch: bool = False, reset_tests: bool = True) -> Sco
         if isinstance(same_chat_callout, dict):
             metadata["same_chat_callout"] = same_chat_callout
         metadata["callout_deterministic_label"] = deterministic_callout_label(
-            value == CORRECT,
+            value > 0,
             same_chat_callout,
         )
 

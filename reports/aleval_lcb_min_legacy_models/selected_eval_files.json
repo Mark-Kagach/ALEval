@@ -1,0 +1,58 @@
+{
+  "per_model": {
+    "deepseek_deepseek-chat-v3.1": {
+      "model": "openrouter/deepseek/deepseek-chat-v3.1",
+      "source_logs_dir": "logs/aleval_lcb_min_legacy_models/lcb-min/deepseek_deepseek-chat-v3.1",
+      "selected_eval_files": [
+        {
+          "path": "logs/aleval_lcb_min_legacy_models/lcb-min/deepseek_deepseek-chat-v3.1/2026-04-18T07-44-40-00-00_aleval-livecodebench-minimal_cvTZBjoGMDFGfJdNm6Skdr.eval",
+          "sample_count": 103,
+          "new_sample_count": 103
+        }
+      ],
+      "unique_sample_ids": 103
+    },
+    "google_gemini-2.5-flash": {
+      "model": "openrouter/google/gemini-2.5-flash",
+      "source_logs_dir": "logs/aleval_lcb_min_legacy_models/lcb-min/google_gemini-2.5-flash",
+      "selected_eval_files": [
+        {
+          "path": "logs/aleval_lcb_min_legacy_models/lcb-min/google_gemini-2.5-flash/2026-04-18T07-44-40-00-00_aleval-livecodebench-minimal_6AkcUUKbMkoGZtEhuBcYXd.eval",
+          "sample_count": 103,
+          "new_sample_count": 103
+        }
+      ],
+      "unique_sample_ids": 103
+    },
+    "mistralai_devstral-medium": {
+      "model": "openrouter/mistralai/devstral-medium",
+      "source_logs_dir": "logs/aleval_lcb_min_legacy_models/lcb-min/mistralai_devstral-medium",
+      "selected_eval_files": [
+        {
+          "path": "logs/aleval_lcb_min_legacy_models/lcb-min/mistralai_devstral-medium/2026-04-18T07-44-40-00-00_aleval-livecodebench-minimal_5aBviGCZiENNXQdgk8EWE6.eval",
+          "sample_count": 103,
+          "new_sample_count": 103
+        }
+      ],
+      "unique_sample_ids": 103
+    },
+    "openai_gpt-4.1-mini": {
+      "model": "openrouter/openai/gpt-4.1-mini",
+      "source_logs_dir": "logs/aleval_lcb_min_legacy_models/lcb-min/openai_gpt-4.1-mini",
+      "selected_eval_files": [
+        {
+          "path": "logs/aleval_lcb_min_legacy_models/lcb-min/openai_gpt-4.1-mini/2026-04-18T07-44-40-00-00_aleval-livecodebench-minimal_G85rjW4PftByipLvM4TJL7.eval",
+          "sample_count": 103,
+          "new_sample_count": 103
+        }
+      ],
+      "unique_sample_ids": 103
+    }
+  },
+  "models": [
+    "deepseek_deepseek-chat-v3.1",
+    "google_gemini-2.5-flash",
+    "mistralai_devstral-medium",
+    "openai_gpt-4.1-mini"
+  ]
+}
